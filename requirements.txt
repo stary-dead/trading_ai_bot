@@ -1,0 +1,12 @@
+mcp>=0.9.0
+aiohttp==3.9.1
+requests==2.31.0
+python-dotenv==1.0.0
+anthropic==0.34.0
+pandas==2.2.0
+numpy==1.26.0
+ccxt==4.2.1
+websockets==12.0
+python-binance==1.0.19
+ta==0.10.2
+plotly==5.17.0
