@@ -8,6 +8,19 @@ trade_history.csv
 backtest_results/
 config_backup.json
 
+# Historical Data Tool files
+*.db
+test_historical_data.db
+historical_data.db
+data/
+test_exports/
+historical_data_test.log
+*.csv
+*.json
+!config.json
+!package.json
+!requirements.txt
+
 # API keys and sensitive data
 keys/
 secrets/

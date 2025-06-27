@@ -21,6 +21,12 @@
     "timeframe": "15m",
     "analysis_interval": 900
   },
+  "historical_data": {
+    "cache_db_path": "data/historical_data.db",
+    "supported_intervals": ["1m", "5m", "15m", "1h", "4h", "1d"],
+    "max_records_per_request": 500,
+    "export_directory": "data/exports"
+  },
   "ai": {
     "model": "claude-3-5-sonnet-20241022",
     "max_tokens": 2000,
