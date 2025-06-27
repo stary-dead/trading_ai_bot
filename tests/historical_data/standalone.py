@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Standalone тест для Historical Data Tool
-Позволяет запускать инструмент отдельно от проекта для тестирования
+Запуск: python -m tests.historical_data.standalone
 """
 
 import asyncio
@@ -13,24 +13,45 @@ from pathlib import Path
 import sys
 import os
 
-# Добавляем путь к модулю в sys.path для возможности импорта
-current_dir = Path(__file__).parent
-src_path = current_dir / "src"
-sys.path.insert(0, str(src_path))
+# Добавляем корневую директорию проекта в sys.path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root / "src"))
 
 from trading_ai_bot.tools.historical_data import HistoricalDataTool
 
 
 def setup_logging(level: str = "INFO"):
     """Настройка логирования"""
-    logging.basicConfig(
-        level=getattr(logging, level.upper()),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('historical_data_test.log')
-        ]
+    # Создаем директорию для логов относительно корня проекта
+    logs_dir = project_root / "logs" / "historical_data"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Настраиваем логирование с правильной кодировкой
+    log_file = logs_dir / "standalone_test.log"
+    
+    # Создаем форматтер без эмоджи
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
+    
+    # Настраиваем root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, level.upper()))
+    
+    # Очищаем существующие handlers
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
+    
+    # File handler с UTF-8 кодировкой
+    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
 
 
 def get_test_config():
@@ -40,7 +61,7 @@ def get_test_config():
             'base_url': 'https://fapi.binance.com'
         },
         'historical_data': {
-            'cache_db_path': 'test_historical_data.db'
+            'cache_db_path': str(project_root / 'tests' / 'data' / 'test_historical_data.db')
         }
     }
 
@@ -102,9 +123,9 @@ async def test_export_data(tool: HistoricalDataTool, symbol: str, interval: str,
     """Тест экспорта данных"""
     print(f"\n=== Тест экспорта данных ===")
     
-    # Создаем директорию для экспорта
-    export_dir = Path("test_exports")
-    export_dir.mkdir(exist_ok=True)
+    # Создаем директорию для экспорта в папке tests
+    export_dir = project_root / "tests" / "exports"
+    export_dir.mkdir(parents=True, exist_ok=True)
     
     file_path = export_dir / f"{symbol}_{interval}.{export_format}"
     
@@ -185,6 +206,7 @@ async def main():
     print(f"Интервал: {args.interval}")
     print(f"Формат экспорта: {args.export_format}")
     print(f"Тесты: {args.test}")
+    print(f"Логи сохраняются в: {project_root / 'logs' / 'historical_data'}")
     
     # Создаем инструмент
     config = get_test_config()
@@ -218,7 +240,7 @@ async def main():
         print(f"\n=== Сводка результатов ===")
         for test_name, result in results.items():
             success = result.get('success', False) if isinstance(result, dict) else False
-            status = "✅ УСПЕХ" if success else "❌ ОШИБКА"
+            status = "[УСПЕХ]" if success else "[ОШИБКА]"
             print(f"{test_name.upper()}: {status}")
         
         print(f"\nТестирование завершено!")

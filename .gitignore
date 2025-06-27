@@ -13,7 +13,10 @@ config_backup.json
 test_historical_data.db
 historical_data.db
 data/
+logs/
 test_exports/
+tests/data/
+tests/exports/
 historical_data_test.log
 *.csv
 *.json

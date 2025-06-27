@@ -6,6 +6,7 @@ CLI модуль для Historical Data Tool
 import asyncio
 import json
 import sys
+import logging
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -32,6 +33,41 @@ except ImportError:
         }
 
 
+def setup_cli_logging():
+    """Настройка логирования для CLI"""
+    # Создаем директорию для логов
+    logs_dir = Path("logs/historical_data")
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Настраиваем логирование с правильной кодировкой
+    log_file = logs_dir / "cli.log"
+    
+    # Создаем форматтер без эмоджи и с ASCII безопасными сообщениями
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # Настраиваем только file handler для CLI (консоль не нужна)
+    try:
+        file_handler = logging.FileHandler(log_file, encoding='utf-8', mode='a')
+    except:
+        # Fallback для Windows
+        file_handler = logging.FileHandler(log_file, mode='a')
+    
+    file_handler.setFormatter(formatter)
+    
+    # Настраиваем логгер для historical_data модуля
+    logger = logging.getLogger('trading_ai_bot.tools.historical_data')
+    logger.setLevel(logging.INFO)
+    
+    # Очищаем существующие handlers
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+    
+    logger.addHandler(file_handler)
+
+
 async def main():
     """Основная функция CLI"""
     import argparse
@@ -54,6 +90,9 @@ async def main():
     args = parser.parse_args()
     
     try:
+        # Настраиваем логирование
+        setup_cli_logging()
+        
         # Загружаем конфигурацию
         config = get_config()
         
@@ -74,11 +113,11 @@ async def main():
                 )
                 
                 if result['success']:
-                    print(f"✅ Загружено {result['records_count']} записей")
-                    print(f"Валидация: {'✅ Успешно' if result['validation']['is_valid'] else '❌ Есть ошибки'}")
-                    print(f"Кэширование: {'✅ Успешно' if result['cached'] else '❌ Ошибка'}")
+                    print(f"[УСПЕХ] Загружено {result['records_count']} записей")
+                    print(f"Валидация: {'[УСПЕХ] Прошла успешно' if result['validation']['is_valid'] else '[ОШИБКА] Есть ошибки'}")
+                    print(f"Кэширование: {'[УСПЕХ] Выполнено' if result['cached'] else '[ОШИБКА] Не удалось'}")
                 else:
-                    print(f"❌ Ошибка: {result.get('error', 'Неизвестная ошибка')}")
+                    print(f"[ОШИБКА] Ошибка: {result.get('error', 'Неизвестная ошибка')}")
             
             elif args.action == 'export':
                 if not args.output:
@@ -94,9 +133,9 @@ async def main():
                 )
                 
                 if result['success']:
-                    print(f"✅ Данные экспортированы в {args.output}")
+                    print(f"[УСПЕХ] Данные экспортированы в {args.output}")
                 else:
-                    print(f"❌ Ошибка экспорта: {result.get('error', 'Неизвестная ошибка')}")
+                    print(f"[ОШИБКА] Экспорт не удался: {result.get('error', 'Неизвестная ошибка')}")
             
             elif args.action == 'info':
                 print(f"Информация о кэшированных данных {args.symbol} ({args.interval})...")
@@ -107,14 +146,14 @@ async def main():
                 )
                 
                 if result['success']:
-                    print(f"✅ Доступные данные:")
+                    print(f"[УСПЕХ] Доступные данные:")
                     print(f"   Период: {result['min_date']} - {result['max_date']}")
                     print(f"   Записей: {result['records_count']}")
                 else:
-                    print(f"❌ {result.get('message', 'Нет данных в кэше')}")
+                    print(f"[ИНФО] {result.get('message', 'Нет данных в кэше')}")
     
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"[ОШИБКА] Ошибка: {e}")
         sys.exit(1)
 
 
